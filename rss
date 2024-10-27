@@ -1,0 +1,65 @@
+import requests
+import xml.etree.ElementTree as ET
+
+def fetch_rss_feed(url):
+    """Fetch the RSS feed from the given URL."""
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.text
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data from {url}: {e}")
+        return None
+
+def parse_rss_feed(feed_data):
+    """Parse the RSS feed data and extract items."""
+    root = ET.fromstring(feed_data)
+    channel = root.find('channel')
+    
+    if channel is None:
+        print("No channel found in RSS feed.")
+        return []
+
+    # Extract channel info
+    title = channel.find('title').text if channel.find('title') else 'No title'
+    description = channel.find('description').text if channel.find('description') else 'No description'
+    print(f"\nFeed: {title}\nDescription: {description}\n{'='*40}")
+
+    # Extract each item in the RSS feed
+    items = []
+    for item in channel.findall('item'):
+        item_title = item.find('title').text if item.find('title') else 'No title'
+        item_desc = item.find('description').text if item.find('description') else 'No description'
+        item_link = item.find('link').text if item.find('link') else 'No link'
+        
+        items.append({
+            "title": item_title,
+            "description": item_desc,
+            "link": item_link
+        })
+    return items
+
+def display_feed(items):
+    """Display the parsed feed items."""
+    for i, item in enumerate(items, start=1):
+        print(f"\nItem {i}")
+        print(f"Title: {item['title']}")
+        print(f"Description: {item['description']}")
+        print(f"Link: {item['link']}")
+        print("-" * 40)
+
+def main():
+    # Get multiple RSS feed URLs from the user
+    urls = input("Enter RSS feed URLs separated by commas: ").split(',')
+
+    for url in urls:
+        url = url.strip()
+        print(f"\nFetching feed from: {url}")
+        feed_data = fetch_rss_feed(url)
+        
+        if feed_data:
+            items = parse_rss_feed(feed_data)
+            display_feed(items)
+
+if __name__ == "__main__":
+    main()
